@@ -1,0 +1,3 @@
+environment,gravity_g,o2_pct,pressure_kpa,data_in_psi,note
+ISS,0,,,10,"data_in_psi = number of tests.csv rows with gravity_g = 0. gravity_g = 0 is a QABAS convention for microgravity. SAFFIRE-II ran on Cygnus after it left the ISS and is counted here by team decision. o2_pct and pressure_kpa left empty: no source file defines them for the ISS scenario (SAFFIRE-II tests: table O2 21.5 to 22.1 %, measured pressure 102.5 to 102.8 kPa)."
+Earth (reference),1,,,9,"data_in_psi = number of tests.csv rows with a 1-g comparison result (outcome_1g not empty). gravity_g = 1 from the source column names ""1-g"". o2_pct and pressure_kpa left empty: the source does not give the conditions of the 1-g tests."

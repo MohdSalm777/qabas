@@ -1,0 +1,31 @@
+source_id,title,type,file_name,psi_record_id,url,year
+PSI-99,Spacecraft Fire Experiment-II (SAFFIRE-II) PSI study record,dataset,,PSI-99,https://doi.org/10.60555/2chp-m469,2024
+PSI-99-EXPTABLE,SAFFIRE-II experimental table,experiment table,PSI-99_Experimental table_SAFFIRE-2.csv,PSI-99,,
+PSI-99-META,PSI-99 investigation metadata (ISA-Tab),document,PSI-99_metadata_PSI-167_SAFFIRE-II.zip,PSI-99,,2024
+PSI-99-DOD,SAFFIRE-II data organisation document,document,SAFFIRE-II DoD.docx,PSI-99,,
+PSI-99-OVERVIEW,"The Spacecraft Fire Experiment (Saffire) - Objectives, Development and Status",paper,"SAFFIRE Objectives, Development and Status.pdf",PSI-99,https://ntrs.nasa.gov/search.jsp?R=20170001636,2016
+PSI-99-OPS,SAFFIRE-II Operations,document,SAFFIRE-II Operations.pdf,PSI-99,,
+PSI-99-NOMEN,SAFFIRE-II Image Directory Nomenclature Version 3.0,document,SAFFIRE-II_Image_Directory_Nomenclature_v3.0.pdf,PSI-99,,
+PSI-99-WAIVER,SFS-W-009 MFB340 Thermocouple Location Non-conformance,document,SFS-W-009_MFB340-Saffire-2 SIBAL samples-Gas phase TC height nonconformance.pdf,PSI-99,,2014
+PSI-99-TMGRAPHS,Saffire-II Sample 1-9 TM Graphs (plots of the sensor files; not extracted),document,Saffire-II Sample <n> TM Graphs.docx,PSI-99,,
+PSI-99-CO2PLOT,Saffire-II stitched CO2 plot (graph only; not extracted),document,SaffireIIStitchedCO2V7.pdf,PSI-99,,
+PSI-99-TELEMETRY,Saffire-II Telemetry Data (Cygnus and Saffire 1 Hz telemetry; not extracted by team decision),sensor time series,Saffire-II Telemetry Data.xlsx,PSI-99,,2016
+PSI-99-MERGE,SAFFIRE-II MergeResult jpeg v5 Final (image file list; not extracted),other,SAFFIRE-II_MergeResult-jpeg_v5_Final.xlsx,PSI-99,,2016
+PSI-99-SENS-S1,"Saffire Sensor Data Sample 1 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 1.xlsx,PSI-99,,2016
+PSI-99-SENS-S2,"Saffire Sensor Data Sample 2 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 2.xlsx,PSI-99,,2016
+PSI-99-SENS-S3,"Saffire Sensor Data Sample 3 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 3.xlsx,PSI-99,,2016
+PSI-99-SENS-S4,"Saffire Sensor Data Sample 4 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 4.xlsx,PSI-99,,2016
+PSI-99-SENS-S5,"Saffire Sensor Data Sample 5 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 5.xlsx,PSI-99,,2016
+PSI-99-SENS-S6,"Saffire Sensor Data Sample 6 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 6.xlsx,PSI-99,,2016
+PSI-99-SENS-S7,"Saffire Sensor Data Sample 7 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 7.xlsx,PSI-99,,2016
+PSI-99-SENS-S8,"Saffire Sensor Data Sample 8 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 8.xlsx,PSI-99,,2016
+PSI-99-SENS-S9,"Saffire Sensor Data Sample 9 (calibrated data, about 30 Hz)",sensor time series,Saffire Sensor Data Sample 9.xlsx,PSI-99,,2016
+PSI-99-IMG-S1C2,SAFFIRE-II S1C2 mapped JPEG image set and its distortion grid,images,SAFFIRE-II_S1C2_Image_Data_All-JPEGs_Mapped_part1-3.zip,PSI-99,,2016
+PSI-99-IMG-S2C2,SAFFIRE-II S2C2 mapped JPEG image set and its distortion grid,images,SAFFIRE-II_S2C2_Image_Data_All_JPEGs_Mapped_part1-3.zip,PSI-99,,2016
+PSI-99-IMG-S3C2,SAFFIRE-II S3C2 JPEG image set and its distortion grid,images,SAFFIRE_II_S3C2_Image_Data_All-JPEGs_part1.zip; SAFFIRE-II_S3C2_Image_Data_All-JPEGs_part2-3.zip,PSI-99,,2016
+PSI-99-IMG-S4C1,SAFFIRE-II S4C1 mapped JPEG image set and its distortion grid,images,SAFFIRE-II_S4C1_Image_Data_All_JPEGs_Mapped_part1-3.zip,PSI-99,,2016
+PSI-99-IMG-S5C1,SAFFIRE-II S5C1 mapped JPEG image set and its distortion grid,images,SAFFIRE-II_S5C1_Image_Data_All_JPEGs_Mapped_part1-2.zip,PSI-99,,2016
+PSI-99-IMG-S6C1,SAFFIRE-II S6C1 mapped JPEG image set and its distortion grid,images,SAFFIRE-II_S6C1_Image_Data_All-JPEGs_Mapped_part1.zip; SAFFIRE-II-S6C1_Image_Data_All_JPEGs_Mapped_part2.zip,PSI-99,,2016
+PSI-99-IMG-S7C1,SAFFIRE-II S7C1 mapped JPEG image set and its distortion grid,images,SAFFIRE-II_S7C1_Image_Data_All_JPEGs_Mapped_part1-4.zip,PSI-99,,2016
+PSI-99-IMG-S8C1,SAFFIRE-II S8C1 mapped JPEG image set and its distortion grid,images,SAFFIRE-II_S8C1_Image_Data_All-JPEGs_Mapped_part1-4.zip,PSI-99,,2016
+PSI-99-IMG-S9C1,SAFFIRE-II S9C1 mapped JPEG image set and its distortion grid,images,SAFFIRE-II_S9C1_Image_Data_All_JPEGs_Mapped_part1-6.zip,PSI-99,,2016
