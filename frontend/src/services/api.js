@@ -34,3 +34,15 @@ export function getInvestigations() {
 export function getSources() {
   return get("/api/sources");
 }
+
+export async function askQabas(question) {
+  const response = await fetch(`${API_URL}/api/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed (${response.status})`);
+  }
+  return response.json();
+}

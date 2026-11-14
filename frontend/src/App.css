@@ -871,3 +871,74 @@ footer {
     text-align: left;
   }
 }
+
+
+/* ---------- ask qabas ---------- */
+
+.ask {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+}
+
+.ask-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ask-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.primary:disabled,
+.tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ask-item {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+
+.ask-question {
+  margin: 0 0 8px;
+  color: var(--flame-soft);
+  font-weight: 600;
+}
+
+.ask-answer {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.ask-sources {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.ask-source {
+  margin-top: 8px;
+}
+
+@media (max-width: 560px) {
+  .ask {
+    padding: 16px;
+  }
+
+  .ask-form {
+    flex-direction: column;
+  }
+}

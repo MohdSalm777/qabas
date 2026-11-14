@@ -5,6 +5,7 @@ import TestCard from "./components/TestCard";
 import TestDetail from "./components/TestDetail";
 import FireLab from "./components/FireLab";
 import Insights from "./components/Insights";
+import AskQabas from "./components/AskQabas";
 
 function App() {
   const [tests, setTests] = useState([]);
@@ -147,6 +148,15 @@ function App() {
             What the tests say when you put them side by side, and where the data stops.
           </p>
           {status === "ready" && <Insights tests={tests} />}
+        </section>
+
+        <section id="ask">
+          <h2>Ask QABAS</h2>
+          <p className="section-intro">
+            Ask a question in plain language. The answer comes only from the records on
+            this site, and each statement points to the record behind it.
+          </p>
+          <AskQabas onOpenTest={setOpenTestId} />
         </section>
 
         <section id="findings">
