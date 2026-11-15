@@ -22,6 +22,7 @@ import json
 import math
 import os
 import re
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -211,8 +212,13 @@ def get_catalogue():
 # Set GEMINI_API_KEY on the server to switch on written answers. Without a key the
 # endpoint still works and returns the closest records.
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip().strip('"').strip("'")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "").strip()
+# Tried in this order; the first model that answers is used.
+GEMINI_MODELS = [m for m in dict.fromkeys(
+    [GEMINI_MODEL, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-2.0-flash"]
+) if m]
+LAST_AI = {"model": None, "error": None}
 
 SYSTEM_PROMPT = """You are QABAS, a friendly guide to NASA's spacecraft fire experiments,
 built for a NASA Space Apps project. Talk like a knowledgeable friend: warm, encouraging,
@@ -376,16 +382,48 @@ def ask_gemini(question: str, records: list[dict], history: list | None = None) 
     body = {
         "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": contents,
-        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 1500},
+        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 4096},
     }
-    request = urllib.request.Request(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-        data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY},
-    )
-    with urllib.request.urlopen(request, timeout=40) as response:
-        data = json.loads(response.read())
-    return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    errors = []
+    for model in GEMINI_MODELS:
+        request = urllib.request.Request(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+            data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=40) as response:
+                data = json.loads(response.read())
+            parts = data["candidates"][0].get("content", {}).get("parts", [])
+            text = "".join(p.get("text", "") for p in parts).strip()
+            if not text:
+                raise ValueError(f"empty answer ({data['candidates'][0].get('finishReason')})")
+            LAST_AI.update(model=model, error=None)
+            return text
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode("utf-8", "replace")
+            try:
+                detail = json.loads(detail)["error"]["message"]
+            except Exception:
+                pass
+            errors.append(f"{model}: HTTP {error.code} - {detail[:300]}")
+        except Exception as error:
+            errors.append(f"{model}: {type(error).__name__} - {str(error)[:300]}")
+    LAST_AI.update(model=None, error=" | ".join(errors))
+    print("GEMINI ERROR:", LAST_AI["error"], flush=True)
+    raise RuntimeError(LAST_AI["error"])
+
+
+@app.get("/api/ai-check")
+def ai_check():
+    """Open this in a browser to see whether written AI answers work, and why not."""
+    if not GEMINI_API_KEY:
+        return {"ai": "off", "reason": "GEMINI_API_KEY is not set on this server"}
+    try:
+        reply = ask_gemini("Say hi in five words.", [])
+        return {"ai": "on", "model": LAST_AI["model"], "reply": reply}
+    except Exception as error:
+        return {"ai": "error", "reason": str(error)}
 
 
 class Exchange(BaseModel):
