@@ -214,16 +214,23 @@ def get_catalogue():
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
-SYSTEM_PROMPT = """You are Ask QABAS, an assistant for a NASA Space Apps project about
-spacecraft fire safety. Answer ONLY from the RECORDS given to you.
+SYSTEM_PROMPT = """You are QABAS, a friendly guide to NASA's spacecraft fire experiments,
+built for a NASA Space Apps project. Talk like a knowledgeable friend: warm, encouraging,
+plain words, never stiff. A short friendly opener is welcome ("Good question!", "Happy to
+help!"), but keep it to a few words.
 
-Rules:
+Greetings and small talk (hi, thanks, how are you, who are you): reply warmly in one or two
+sentences, say what you can help with, and suggest one question the person could ask. No
+record ids are needed for this.
+
+For every question about fire, materials, tests or investigations, answer ONLY from the
+RECORDS given to you, and follow these rules:
 - Every factual sentence must end with the id of the record it comes from in square
   brackets, for example [SAFFIRE-II-2-5]. Use the ids exactly as written.
 - Never give a number, material, or result that is not in the RECORDS.
-- If the RECORDS do not answer the question, say exactly: "The QABAS dataset does not
-  contain enough information to answer that." Then say in one sentence what the dataset
-  does cover.
+- If the RECORDS do not answer the question, say so kindly, for example: "I'd love to help,
+  but the QABAS dataset doesn't cover that yet." Then say in one sentence what it does
+  cover. Never guess.
 - Detailed test data exists for SAFFIRE-II only: microgravity tests at about 21.5-22.1 %
   oxygen and about 102.6 kPa. Do not extend those results to the Moon, Mars, or other
   atmospheres; say the data does not cover them.
@@ -232,7 +239,9 @@ Rules:
   and say that QABAS has not yet extracted their detailed data.
 - Outcome labels (no spread, partial burn, burned full length, no ignition) are QABAS
   labels, not NASA wording. Say so if the user asks about outcomes.
-- Be brief: at most 6 sentences, plain language. Reply in the language of the question.
+- If the question is about something else entirely (homework, news, other topics), say
+  kindly that you only know about the fire experiments in QABAS.
+- Be brief: at most 6 sentences. Reply in the language of the question.
 """
 
 
@@ -355,12 +364,19 @@ def closest_records(question: str, records: list[dict], limit: int = 3) -> list[
     return [records[i] for score, i in ranked[:limit] if score > 0]
 
 
-def ask_gemini(question: str, records: list[dict]) -> str:
+def ask_gemini(question: str, records: list[dict], history: list | None = None) -> str:
     context = "\n".join(f"[{r['id']}] ({r['kind']}) {r['text']}" for r in records)
+    contents = []
+    for turn in (history or [])[-3:]:  # the last three exchanges, so follow-ups make sense
+        contents.append({"role": "user", "parts": [{"text": turn.question[:500]}]})
+        contents.append({"role": "model", "parts": [{"text": turn.answer[:1500]}]})
+    contents.append(
+        {"role": "user", "parts": [{"text": f"RECORDS:\n{context}\n\nQUESTION: {question}"}]}
+    )
     body = {
         "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
-        "contents": [{"role": "user", "parts": [{"text": f"RECORDS:\n{context}\n\nQUESTION: {question}"}]}],
-        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1500},
+        "contents": contents,
+        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 1500},
     }
     request = urllib.request.Request(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
@@ -372,8 +388,21 @@ def ask_gemini(question: str, records: list[dict]) -> str:
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 
+class Exchange(BaseModel):
+    question: str
+    answer: str
+
+
 class Question(BaseModel):
     question: str
+    history: list[Exchange] = []
+
+
+GREETING = re.compile(
+    r"^\s*(hi|hello|hey|hiya|good (morning|afternoon|evening)|salam|thanks|thank you|"
+    r"who are you|how are you|مرحبا|مرحبًا|اهلا|أهلا|هلا|السلام عليكم|سلام|شكرا|شكرًا)\b",
+    re.IGNORECASE,
+)
 
 
 @app.post("/api/ask")
@@ -389,7 +418,7 @@ def ask(body: Question):
 
     if GEMINI_API_KEY:
         try:
-            answer = ask_gemini(question, records)
+            answer = ask_gemini(question, records, body.history)
             cited = [i for i in dict.fromkeys(re.findall(r"\[([A-Za-z0-9\-]+)\]", answer)) if i in by_id]
             return {
                 "mode": "ai",
@@ -398,6 +427,17 @@ def ask(body: Question):
             }
         except Exception:
             pass  # fall back to the closest records below
+
+    if GREETING.match(question):
+        return {
+            "mode": "chat",
+            "answer": (
+                "Hi there! I'm QABAS, your guide to NASA's spacecraft fire experiments. "
+                "Ask me about a material, a test, or which investigations matter for a "
+                "safety question, for example: which material spread flame fastest?"
+            ),
+            "sources": [],
+        }
 
     matches = closest_records(question, records)
     return {

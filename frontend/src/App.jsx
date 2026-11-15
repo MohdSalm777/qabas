@@ -255,8 +255,8 @@ function App() {
         <section id="ask">
           <h2>Ask QABAS</h2>
           <p className="section-intro">
-            Ask a question in plain language. The answer comes only from the records on
-            this site, and each statement points to the record behind it.
+            Chat with QABAS in plain language. It answers only from the records on this
+            site and shows the record behind each statement.
           </p>
           <AskQabas onOpenTest={setOpenTestId} />
         </section>

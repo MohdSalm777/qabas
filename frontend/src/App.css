@@ -879,10 +879,85 @@ footer {
   background: var(--panel);
 }
 
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 480px;
+  margin-bottom: 14px;
+  padding-right: 6px;
+  overflow-y: auto;
+}
+
+.chat-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bubble {
+  max-width: 82%;
+  padding: 12px 16px;
+  border-radius: 16px;
+}
+
+.bubble p {
+  margin: 0;
+}
+
+.bubble-bot {
+  align-self: flex-start;
+  border-top-left-radius: 4px;
+  background: var(--panel-2);
+}
+
+.bubble-user {
+  align-self: flex-end;
+  border-top-right-radius: 4px;
+  background: var(--flame);
+  color: #1a0f05;
+  font-weight: 500;
+}
+
+.bubble-name {
+  margin-bottom: 4px !important;
+  color: var(--flame);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.typing {
+  color: var(--muted);
+}
+
+.ask-answer {
+  white-space: pre-wrap;
+}
+
+.ask-sources {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.ask-source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ask-source .hint {
+  margin-top: 6px;
+}
+
+.ask-examples {
+  margin-bottom: 12px;
+}
+
 .ask-form {
   display: flex;
   gap: 10px;
-  margin-bottom: 14px;
 }
 
 .ask-form input {
@@ -890,7 +965,7 @@ footer {
   min-width: 0;
   padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--panel-2);
   color: var(--text);
   font: inherit;
@@ -902,41 +977,13 @@ footer {
   cursor: not-allowed;
 }
 
-.ask-item {
-  margin-top: 16px;
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--panel-2);
-}
-
-.ask-question {
-  margin: 0 0 8px;
-  color: var(--flame-soft);
-  font-weight: 600;
-}
-
-.ask-answer {
-  margin: 0;
-  white-space: pre-wrap;
-}
-
-.ask-sources {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
-
-.ask-source {
-  margin-top: 8px;
-}
-
 @media (max-width: 560px) {
   .ask {
     padding: 16px;
   }
 
-  .ask-form {
-    flex-direction: column;
+  .bubble {
+    max-width: 94%;
   }
 }
 
