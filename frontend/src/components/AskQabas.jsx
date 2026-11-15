@@ -7,6 +7,7 @@ const EXAMPLES = [
   "Which material spread flame fastest in microgravity?",
   "What happened to Nomex?",
   "How did silicone behave on Earth compared with space?",
+  "Which investigations matter for smoke detection?",
   "Can this data tell us about fire on the Moon?",
 ];
 

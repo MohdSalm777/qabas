@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QABAS Intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070b16; --ink:#ebe5d6; --muted:#8e9ab3; --orange:#ff8a2a; --blue:#4aa3ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;overflow:hidden}
+  canvas{position:fixed;inset:0;display:block}
+
+  #brand{position:fixed;top:22px;left:24px;font:600 15px "IBM Plex Mono",monospace;letter-spacing:.35em;color:var(--ink);opacity:.8;display:flex;align-items:center;gap:10px}
+  #brand i{width:10px;height:14px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,var(--blue) 0 28%,var(--orange) 30%);display:inline-block}
+
+  #dots{position:fixed;top:28px;right:24px;display:flex;gap:8px}
+  #dots span{width:22px;height:3px;border-radius:2px;background:#22304d;transition:background .4s}
+  #dots span.on{background:var(--orange)}
+
+  #caption{position:fixed;left:50%;bottom:132px;transform:translateX(-50%);width:min(820px,calc(100% - 32px));text-align:center;transition:opacity .45s}
+  #caption .en{font-size:clamp(17px,2.3vw,24px);font-weight:500;line-height:1.35;text-shadow:0 2px 14px #070b16,0 0 4px #070b16}
+  #caption .tag{font:600 clamp(14px,1.6vw,17px) "IBM Plex Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--orange);margin-bottom:10px}
+  #caption .tag:empty{display:none}
+
+  #start{position:fixed;left:50%;bottom:48px;transform:translateX(-50%);
+    background:var(--orange);color:#160b02;border:0;border-radius:999px;
+    font:600 17px Inter,sans-serif;padding:14px 38px;cursor:pointer;
+    box-shadow:0 0 0 0 rgba(255,138,42,.45);animation:pulse 2.4s infinite}
+  #start:hover{filter:brightness(1.08)}
+  #start:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,138,42,.4)}70%{box-shadow:0 0 0 16px rgba(255,138,42,0)}100%{box-shadow:0 0 0 0 rgba(255,138,42,0)}}
+
+</style>
+</head>
+<body>
+<canvas id="c" aria-hidden="true"></canvas>
+<div id="brand"><i></i>QABAS</div>
+<div id="dots"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+<div id="caption" aria-live="polite"><div class="tag"></div><div class="en"></div></div>
+<button id="start" type="button">Enter QABAS ▶</button>
+
+
+<script>
+/* ===== QABAS intro: "From Ignorance to Intelligence" =====
+   Six scenes, loops until the user clicks Start (46.5 s per loop).
+   Test a moment: add ?t=20 to the URL to freeze the animation at 20 s.
+
+   Scientific content shown on the cards comes only from NASA's
+   "Flame in Freefall" challenge statement (NASA PSI combustion research):
+   - ACME CFI-G: microgravity tests with up to 85% oxygen
+   - BASS / BASS-II: burning of solids, run in the MSG's fan-driven flow duct
+   - Planned Moon Base / rovers: likely ≥30% O₂ at ≤10.2 psi
+   - No partial-gravity combustion data in PSI yet; 0 g and 1 g results could bound it
+   Microgravity flame look (dim, blue, spherical) also follows that statement. */
+
+/* ---------- timeline ---------- */
+const LEN = [6.5, 5.5, 6, 6.5, 4.5, 17.5];           // seconds per scene
+const START = LEN.reduce((a,l,i)=>(a.push(i?a[i-1]+LEN[i-1]:0),a),[]);
+const LOOP = LEN.reduce((a,b)=>a+b,0);
+const CAPS = [
+  ["Every mission begins with a person.", ""],
+  ["A planned experiment, done by the procedure.", "Mission day 41."],
+  ["But fire behaves differently here, and the answers were scattered across decades of research.", ""],
+  ["Without organized data, even a careful crew can't predict what comes next.", ""],
+  ["A small fire can become a major danger when we don't understand it.", ""],
+  ["What if we understood the fire before we started?", ""],
+];
+const SUB6B = ["Decades of NASA fire experiments, summarized, ranked and explained.", ""];
+const SUB6C = ["QABAS: a spark of knowledge for fire in space.", ""];
+
+/* ---------- canvas ---------- */
+const INK="#ebe5d6", ORANGE="#ff8a2a", BLUE="#4aa3ff", MUTED="#8e9ab3", RED="#ff5a3c";
+const c=document.getElementById("c"), ctx=c.getContext("2d");
+let W,H,S,dpr,OY;
+function resize(){
+  dpr=Math.min(2,window.devicePixelRatio||1);
+  W=innerWidth; H=innerHeight;
+  c.width=Math.round(W*dpr); c.height=Math.round(H*dpr);
+  c.style.width=W+"px"; c.style.height=H+"px";
+  // the stage (world y from about −245 to 140) fits between the header and the caption area
+  const top=56,bottom=H-200;
+  S=Math.min(W/1000,Math.max(120,bottom-top)/390);
+  OY=(top+bottom)/2+52*S;
+}
+addEventListener("resize",resize); resize();
+
+/* ---------- math helpers ---------- */
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const lerpP=(p,q,t)=>[lerp(p[0],q[0],t),lerp(p[1],q[1],t)];
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;          // in-out cubic
+const easeOut=t=>1-Math.pow(1-t,3);
+const easeIn=t=>t*t*t;
+const noise=x=>Math.sin(x)*.5+Math.sin(x*2.13+1.7)*.3+Math.sin(x*4.71+.3)*.2;   // smooth, −1..1
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const hexRGB=h=>{const n=parseInt(h.slice(1),16);return[n>>16,n>>8&255,n&255];};
+const mixC=(a,b,t)=>[0,1,2].map(i=>Math.round(lerp(a[i],b[i],t)));
+const rgba=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${clamp(a)})`;
+const C_INK=hexRGB(INK), C_BLUE=hexRGB(BLUE), C_ORANGE=hexRGB(ORANGE), C_RED=hexRGB(RED), C_MUTED=hexRGB(MUTED);
+
+function resample(pts,n){
+  const L=[0];
+  for(let i=1;i<pts.length;i++)L.push(L[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+  const out=[],tot=L[L.length-1]||1;let j=1;
+  for(let k=0;k<n;k++){
+    const d=tot*k/(n-1);
+    while(j<L.length-1&&L[j]<d)j++;
+    const f=(d-L[j-1])/((L[j]-L[j-1])||1);
+    out.push([lerp(pts[j-1][0],pts[j][0],f),lerp(pts[j-1][1],pts[j][1],f)]);
+  }
+  return {pts:out,len:tot};
+}
+function line(pts,{alpha=1,width=2.4,color=C_INK,glow=8,from=0,to=pts.length,dash=null}={}){
+  from=Math.max(0,Math.floor(from)); to=Math.min(pts.length,Math.ceil(to));
+  if(to-from<2||alpha<=0)return;
+  ctx.save();ctx.globalAlpha*=alpha;ctx.strokeStyle=rgba(color,1);ctx.lineWidth=width;
+  ctx.lineJoin=ctx.lineCap="round";ctx.shadowColor=rgba(color,.55);ctx.shadowBlur=glow;
+  if(dash)ctx.setLineDash(dash);
+  ctx.beginPath();ctx.moveTo(pts[from][0],pts[from][1]);
+  for(let i=from+1;i<to;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.stroke();ctx.restore();
+}
+function inScreen(fn){ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);fn();ctx.restore();}
+function vignette(strength,tint=[0,0,0]){
+  if(strength<=0)return;
+  inScreen(()=>{
+    const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.75);
+    g.addColorStop(0,rgba(tint,0));g.addColorStop(1,rgba(tint,strength));
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  });
+}
+
+/* ---------- world layout ---------- */
+const FLOOR=105;                 // ground line inside the station
+const RIG_X=40;                  // experiment stand
+const IGN=[RIG_X,-2];            // lower end of the material sample (ignition point)
+const FLAME=[RIG_X,-4];
+
+/* ---------- the character: one continuous line ---------- */
+function hipOf(p){return[p.x,FLOOR-52+(p.crouch||0)*18+(p.bob||0)];}
+function upper(p,dx,dy){const h=hipOf(p),l=p.lean||0;return[h[0]+dx*Math.cos(l)-dy*Math.sin(l),h[1]+dx*Math.sin(l)+dy*Math.cos(l)];}
+const shoulderOf=p=>upper(p,0,-40), headOf=p=>upper(p,0,-63);
+function ik(a,b,l1,l2,bend){
+  let dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy);const mx=l1+l2-.5;
+  if(d>mx){b=[a[0]+dx/d*mx,a[1]+dy/d*mx];dx=b[0]-a[0];dy=b[1]-a[1];d=mx;}
+  d=Math.max(d,1);
+  const ang=Math.atan2(dy,dx)+bend*Math.acos(clamp((l1*l1+d*d-l2*l2)/(2*l1*d),-1,1));
+  return{mid:[a[0]+Math.cos(ang)*l1,a[1]+Math.sin(ang)*l1],end:b};
+}
+function loopAround(out,from,center,r,n){
+  const a0=Math.atan2(from[1]-center[1],from[0]-center[0]);
+  for(let i=1;i<=n;i++){const a=a0+i/n*Math.PI*2;out.push([center[0]+Math.cos(a)*r,center[1]+Math.sin(a)*r]);}
+}
+function bodyPts(p){
+  const hip=hipOf(p),sh=shoulderOf(p),neck=upper(p,0,-48),hc=headOf(p);
+  const legL=ik(hip,[p.x+p.fL[0],FLOOR+(p.fL[1]||0)],29,29,-1);
+  const legR=ik(hip,[p.x+p.fR[0],FLOOR+(p.fR[1]||0)],29,29,-1);
+  const armL=ik(sh,p.lHw,23,23,1), armR=ik(sh,p.rHw,23,23,1);
+  const toe=f=>[f[0]+8,f[1]];
+  const pts=[toe(legL.end),legL.end,legL.mid,hip,legR.mid,legR.end,toe(legR.end),legR.end,legR.mid,hip,sh,armL.mid,armL.end];
+  const hand=(arm,out)=>{const d=Math.hypot(arm.end[0]-arm.mid[0],arm.end[1]-arm.mid[1])||1;
+    loopAround(out,arm.end,[arm.end[0]+(arm.end[0]-arm.mid[0])/d*3.2,arm.end[1]+(arm.end[1]-arm.mid[1])/d*3.2],3.2,9);};
+  hand(armL,pts); pts.push(armL.mid,sh,armR.mid,armR.end); hand(armR,pts);
+  pts.push(armR.mid,sh,neck); loopAround(pts,neck,hc,14,32);
+  return{pts,hR:armR.end,hL:armL.end,sh,hc};
+}
+function drawBody(p,opts={}){const b=bodyPts(p);line(resample(b.pts,420).pts,opts);return b;}
+
+function stand(x){return{x,lean:0,crouch:0,bob:0,fL:[-9,0],fR:[9,0]};}
+function walk(p,phase,amt){
+  const s=Math.sin(phase)*11*amt;
+  p.fL=[-8+s,-Math.max(0,Math.cos(phase))*6*amt];
+  p.fR=[8-s,-Math.max(0,-Math.cos(phase))*6*amt];
+  p.bob=-Math.abs(Math.sin(phase))*2*amt;
+  return Math.sin(phase)*amt;          // arm swing
+}
+function restHands(p,swing=0){
+  const sh=shoulderOf(p);
+  p.lHw=[sh[0]-5-swing*9,sh[1]+43]; p.rHw=[sh[0]+5+swing*9,sh[1]+43];
+}
+
+/* small ignition wand held in the right hand */
+function drawTool(hand,aim,alpha=1){
+  if(alpha<=0)return null;
+  const dx=aim[0]-hand[0],dy=aim[1]-hand[1],d=Math.hypot(dx,dy)||1,u=[dx/d,dy/d];
+  const P=k=>[hand[0]+u[0]*k,hand[1]+u[1]*k];
+  line([P(-7),P(9)],{alpha,width:5,glow:4});              // grip
+  line([P(9),P(27)],{alpha,width:1.8,glow:4});            // nozzle
+  const tip=P(28);
+  ctx.save();ctx.globalAlpha*=alpha;ctx.fillStyle=INK;ctx.beginPath();ctx.arc(tip[0],tip[1],1.8,0,7);ctx.fill();ctx.restore();
+  return tip;
+}
+
+/* ---------- station, stand, sample ---------- */
+const STATION=(()=>{ // outline of the module as points, broken into pieces for the damage effect
+  const P=[],arc=(cx,cy,a0,a1)=>{for(let i=0;i<=24;i++){const a=lerp(a0,a1,i/24);P.push([cx+Math.cos(a)*120,cy+Math.sin(a)*120]);}};
+  P.push([-210,-150],[210,-150]);arc(210,-30,-Math.PI/2,0);P.push([330,0]);arc(210,0,0,Math.PI/2);
+  P.push([-210,120]);arc(-210,0,Math.PI/2,Math.PI);P.push([-330,-30]);arc(-210,-30,Math.PI,Math.PI*1.5);
+  const pts=resample(P,264).pts,r=rng(21),pieces=[];
+  for(let i=0;i<22;i++){
+    const seg=pts.slice(i*12,i*12+13);const m=seg[6];
+    const dist=Math.hypot(m[0]-FLAME[0],m[1]-FLAME[1]);
+    pieces.push({seg,m,w:clamp(1.35-dist/330),disp:8+r()*42,rot:(r()-.5)*.8,gone:r()<.3});
+  }
+  return pieces;
+})();
+function drawStation(alpha,damage=0,drift=0){
+  if(alpha<=0)return;
+  ctx.save();ctx.globalAlpha*=alpha;
+  STATION.forEach(pc=>{
+    const k=damage*pc.w;
+    if(pc.gone&&k>.45)return;
+    const dx=pc.m[0]-FLAME[0],dy=pc.m[1]-FLAME[1],d=Math.hypot(dx,dy)||1;
+    const off=k*pc.disp+drift*pc.w*10, ox=dx/d*off, oy=dy/d*off, rot=pc.rot*k+drift*pc.rot*.2*pc.w;
+    const seg=pc.seg.map(([x,y])=>{const X=x-pc.m[0],Y=y-pc.m[1];
+      return[pc.m[0]+ox+X*Math.cos(rot)-Y*Math.sin(rot),pc.m[1]+oy+X*Math.sin(rot)+Y*Math.cos(rot)];});
+    line(seg,{color:[58,74,108],width:2,glow:0});
+  });
+  // windows and floor
+  [[-235,-60],[235,-60]].forEach(([x,y],i)=>{
+    const k=damage*(i?1:.4);
+    ctx.save();ctx.strokeStyle="rgba(58,74,108,.9)";ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(x+k*14*(i?1:-1),y-k*6,18,0,Math.PI*2);ctx.stroke();ctx.restore();
+  });
+  const fk=damage;
+  line([[-300,FLOOR+1],[-60,FLOOR+1+fk*6]],{color:[44,58,88],width:1.5,glow:0,alpha:.9});
+  line([[-40,FLOOR+1+fk*10],[300,FLOOR+1-fk*14]],{color:[44,58,88],width:1.5,glow:0,alpha:.9});
+  ctx.restore();
+}
+function drawRig(alpha,burn=0){
+  if(alpha<=0)return;
+  ctx.save();ctx.globalAlpha*=alpha;
+  line([[RIG_X-24,FLOOR],[RIG_X+30,FLOOR]],{width:2.2,glow:3,color:[150,160,185]});
+  line([[RIG_X+16,FLOOR],[RIG_X+16,-48],[RIG_X,-48],[RIG_X,-42]],{width:2,glow:3,color:[150,160,185]});
+  // material sample (thin strip held by the clamp)
+  const top=-42,bottom=lerp(-2,-26,burn);
+  ctx.strokeStyle="rgba(235,229,214,.85)";ctx.lineWidth=1.4;ctx.fillStyle="rgba(235,229,214,.08)";
+  ctx.beginPath();ctx.rect(RIG_X-3.5,top,7,bottom-top);ctx.fill();ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------- fire ---------- */
+const CF={cool:[[225,240,255],[74,163,255],[25,70,190]],hot:[[255,250,225],[255,150,45],[210,50,20]]};
+function drawFlame(x,y,R,{heat=0,chaos=.2,t=0,seed=0,alpha=1,stretch=1}={}){
+  if(R<=.4||alpha<=0)return;
+  const core=mixC(CF.cool[0],CF.hot[0],heat),mid=mixC(CF.cool[1],CF.hot[1],heat),edge=mixC(CF.cool[2],CF.hot[2],heat);
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  let g=ctx.createRadialGradient(x,y,0,x,y,R*3.4);           // soft glow
+  g.addColorStop(0,rgba(mid,.32*alpha));g.addColorStop(.4,rgba(mid,.10*alpha));g.addColorStop(1,rgba(mid,0));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R*3.4,0,7);ctx.fill();
+  ctx.beginPath();                                          // living body
+  for(let i=0;i<=56;i++){
+    const a=i/56*Math.PI*2;
+    const r=R*(1+chaos*(noise(a*3+t*5.3+seed)*.30+noise(a*7-t*9.1+seed*2)*.14));
+    const px=x+Math.cos(a)*r, py=y+Math.sin(a)*r*(a>Math.PI?stretch:1);
+    i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+  }
+  g=ctx.createRadialGradient(x,y,0,x,y,R*1.2);
+  g.addColorStop(0,rgba(core,.95*alpha));g.addColorStop(.35,rgba(mid,.75*alpha));g.addColorStop(.8,rgba(edge,.25*alpha));g.addColorStop(1,rgba(edge,0));
+  ctx.fillStyle=g;ctx.fill();
+  g=ctx.createRadialGradient(x,y,0,x,y,R*.45);              // bright core
+  g.addColorStop(0,rgba(core,.85*alpha));g.addColorStop(1,rgba(core,0));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R*.45,0,7);ctx.fill();
+  ctx.restore();
+}
+function sparkBurst(at,t0,t,n,seed,spread=1){       // small ignition sparks
+  const dt=t-t0; if(dt<0||dt>.7)return;
+  const r=rng(seed);
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  for(let i=0;i<n;i++){
+    const a=r()*Math.PI*2,v=(40+r()*90)*spread,life=.25+r()*.4;if(dt>life){r();continue;}
+    const d=v*(1-Math.exp(-4*dt))/4,d0=v*(1-Math.exp(-4*Math.max(0,dt-.03)))/4;
+    ctx.strokeStyle=rgba(mixC([255,250,220],C_ORANGE,dt/life),1-dt/life);ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(at[0]+Math.cos(a)*d0,at[1]+Math.sin(a)*d0);ctx.lineTo(at[0]+Math.cos(a)*d,at[1]+Math.sin(a)*d);ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ---------- environmental factors: gauges + airflow ---------- */
+const FACTORS=[ // gauge position, label, card position/width, card anchor side
+  {g:[120,-95],label:"O₂",      card:[150,-232,250],side:"bottom",
+   id:"ACME · CFI-G",            body:"Microgravity flames tested with up to 85% oxygen.",                     tag:"NASA PSI"},
+  {g:[240,-40], label:"PRESSURE",card:[280,-122,218],side:"left",
+   id:"MOON BASE · PLANNED",     body:"Likely 30% oxygen or more, at 10.2 psi or less.",                       tag:"NASA"},
+  {g:[170,70],  label:"AIRFLOW", card:[215,42,250],side:"left",
+   id:"BASS · BASS-II",          body:"Burning of solid materials in a fan-driven flow duct.",                tag:"NASA PSI"},
+  {g:[-120,-100],label:"GRAVITY",card:[-475,-215,250],side:"right",
+   id:"PARTIAL GRAVITY",         body:"No Moon or Mars gravity data in PSI yet. 0 g and 1 g results could bound it.",tag:"NASA PSI"},
+];
+function drawGauge(f,i,{alpha=1,unc=1,resolved=0,warn=0,t=0,conn=1}){
+  if(alpha<=0)return;
+  const [x,y]=f.g, col=mixC(mixC([255,170,90],C_RED,warn),C_BLUE,resolved);
+  ctx.save();ctx.globalAlpha*=alpha;
+  // dashed connector from the flame to the factor
+  if(conn>0){
+    const ex=lerp(FLAME[0],x,conn),ey=lerp(FLAME[1],y,conn);
+    ctx.save();ctx.strokeStyle=rgba(col,.35);ctx.lineWidth=1;ctx.setLineDash([3,6]);ctx.lineDashOffset=-t*14;
+    ctx.beginPath();ctx.moveTo(FLAME[0],FLAME[1]);ctx.lineTo(ex,ey);ctx.stroke();ctx.restore();
+  }
+  ctx.translate(x,y);
+  const a0=Math.PI*.75,a1=Math.PI*2.25,R=19;
+  ctx.fillStyle="rgba(10,16,30,.85)";ctx.beginPath();ctx.arc(0,0,R+7,0,7);ctx.fill();
+  ctx.lineWidth=2.2;ctx.strokeStyle=rgba(col,.9);
+  ctx.setLineDash(resolved>.5?[]:[3,3.5]);ctx.lineDashOffset=t*6;
+  ctx.beginPath();ctx.arc(0,0,R,a0,a1);ctx.stroke();ctx.setLineDash([]);
+  // the needle wanders while the factor's effect is unknown, and settles once data is linked
+  const wander=(noise(t*1.9+i*3.1)*.95+noise(t*5.3+i)*.25*warn)*unc*1.35;
+  const ang=Math.PI*1.5+wander+(1-unc)*(i-1.5)*.18;
+  ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(ang)*15,Math.sin(ang)*15);ctx.stroke();
+  ctx.fillStyle=INK;ctx.beginPath();ctx.arc(0,0,2.2,0,7);ctx.fill();
+  // labels
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillStyle=rgba(C_MUTED,.95);ctx.font="600 11px 'IBM Plex Mono', monospace";ctx.fillText(f.label,0,-R-15);
+  ctx.font="500 10px 'IBM Plex Mono', monospace";
+  if(resolved<.5){ctx.fillStyle=rgba(col,.55+.35*Math.abs(Math.sin(t*3+i)));ctx.fillText("unknown",0,R+14);}
+  else{ctx.fillStyle=rgba(C_BLUE,resolved);ctx.fillText("data linked",0,R+14);}
+  ctx.restore();
+}
+function drawAirflow(t,alpha,unc,warn=0){
+  if(alpha<=0)return;
+  const r=rng(77);
+  ctx.save();ctx.lineCap="round";
+  for(let i=0;i<26;i++){
+    const ox=r(),oy=r(),sp=.18+r()*.2;
+    const dir=noise(t*.6+i*.37)*1.7*unc+noise(t*2.1+i)*.5*warn;
+    const u=(ox+t*sp*(1+warn))%1;
+    const lx=(u-.5)*300,ly=(oy-.5)*150,cs=Math.cos(dir),sn=Math.sin(dir);
+    const x=FLAME[0]+lx*cs-ly*sn,y=FLAME[1]+lx*sn+ly*cs;
+    ctx.strokeStyle=rgba(mixC(C_MUTED,C_BLUE,1-unc),alpha*.28*Math.sin(Math.PI*u));ctx.lineWidth=1.1;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-cs*16,y-sn*16);ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ---------- explosion (stateless: everything is a function of time since the blast) ---------- */
+const BLAST=(()=>{const r=rng(1234),sparks=[],embers=[],debris=[],smoke=[];
+  for(let i=0;i<170;i++)sparks.push({a:r()*Math.PI*2,v:260+r()*900,k:2.4+r()*2,life:.5+r()*1.1,w:.8+r()*1.4});
+  for(let i=0;i<60;i++)embers.push({a:r()*Math.PI*2,v:60+r()*260,k:1+r()*.8,life:2.5+r()*3,s:1+r()*1.6});
+  for(let i=0;i<36;i++)debris.push({a:r()*Math.PI*2,v:70+r()*210,k:1+r()*.6,len:6+r()*22,rot:r()*Math.PI,w:(r()-.5)*7});
+  for(let i=0;i<18;i++)smoke.push({a:r()*Math.PI*2,v:30+r()*90,r:30+r()*50});
+  return{sparks,embers,debris,smoke};})();
+const travel=(v,k,dt)=>v*(1-Math.exp(-k*dt))/k;
+function drawBlastWorld(dt){
+  if(dt<0)return;
+  const [X,Y]=FLAME;
+  // smoke (normal blending, slow)
+  BLAST.smoke.forEach((s,i)=>{
+    const d=travel(s.v,.7,dt),R=s.r*(.6+1.6*(1-Math.exp(-dt*.7)));
+    const a=.15*clamp(dt*3)*Math.exp(-dt*.12);
+    const x=X+Math.cos(s.a)*d,y=Y+Math.sin(s.a)*d;
+    const g=ctx.createRadialGradient(x,y,0,x,y,R);g.addColorStop(0,`rgba(110,116,132,${a})`);g.addColorStop(1,"rgba(110,116,132,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fill();
+  });
+  // debris fragments drift on in microgravity
+  BLAST.debris.forEach(d=>{
+    const dist=travel(d.v,d.k,dt)+d.v*.012*dt, rot=d.rot+d.w*(travel(1,d.k,dt)+.03*dt);
+    const x=X+Math.cos(d.a)*dist,y=Y+Math.sin(d.a)*dist,h=d.len/2;
+    line([[x-Math.cos(rot)*h,y-Math.sin(rot)*h],[x+Math.cos(rot)*h,y+Math.sin(rot)*h]],{color:[150,160,185],width:2,glow:0,alpha:.85});
+  });
+  // the experiment stand, torn apart
+  [[RIG_X+16,-48,RIG_X+16,FLOOR,.6,-1.2],[RIG_X-24,FLOOR,RIG_X+30,FLOOR,1.6,.8],[RIG_X,-48,RIG_X+16,-48,-.9,2]].forEach(([x1,y1,x2,y2,ang,w],i)=>{
+    const mx=(x1+x2)/2,my=(y1+y2)/2,dx=mx-X,dy=my-Y,dd=Math.hypot(dx,dy)||1,dist=travel(140,1.3,dt)+4*dt;
+    const cx=mx+dx/dd*dist,cy=my+dy/dd*dist,rot=w*travel(1,1.3,dt)+w*.02*dt,h=Math.hypot(x2-x1,y2-y1)/2,a0=Math.atan2(y2-y1,x2-x1)+rot;
+    line([[cx-Math.cos(a0)*h,cy-Math.sin(a0)*h],[cx+Math.cos(a0)*h,cy+Math.sin(a0)*h]],{color:[150,160,185],width:2,glow:0,alpha:.8});
+  });
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  // fireball
+  if(dt<1.6)drawFlame(X,Y,60+170*(1-Math.exp(-dt*4)),{heat:1,chaos:1.1,t:dt*3,seed:4,alpha:Math.exp(-dt*2.4)});
+  // shockwave: distorted double ring that thins as it travels
+  const sw=Math.exp(-dt*1.7);
+  if(sw>.02){
+    [[1,1],[.86,.5]].forEach(([k,a],j)=>{
+      const R=k*950*(1-Math.exp(-dt*2.3));
+      ctx.beginPath();
+      for(let i=0;i<=80;i++){const th=i/80*Math.PI*2,rr=R*(1+.025*noise(th*6+dt*4+j));i?ctx.lineTo(X+Math.cos(th)*rr,Y+Math.sin(th)*rr):ctx.moveTo(X+Math.cos(th)*rr,Y+Math.sin(th)*rr);}
+      ctx.strokeStyle=rgba(j?C_ORANGE:[255,240,215],sw*a*.75);ctx.lineWidth=(j?3:2)+28*sw*a;ctx.stroke();
+    });
+  }
+  // sparks with motion trails
+  BLAST.sparks.forEach(s=>{
+    if(dt>s.life)return;const f=dt/s.life;
+    const d=travel(s.v,s.k,dt),d0=travel(s.v,s.k,Math.max(0,dt-.06));
+    ctx.strokeStyle=rgba(mixC([255,248,220],C_ORANGE,f),(1-f)*.95);ctx.lineWidth=s.w;
+    ctx.beginPath();ctx.moveTo(X+Math.cos(s.a)*d0,Y+Math.sin(s.a)*d0);ctx.lineTo(X+Math.cos(s.a)*d,Y+Math.sin(s.a)*d);ctx.stroke();
+  });
+  // embers keep glowing and fade slowly
+  BLAST.embers.forEach((e,i)=>{
+    if(dt>e.life)return;const f=dt/e.life,d=travel(e.v,e.k,dt)+e.v*.02*dt;
+    ctx.fillStyle=rgba(C_ORANGE,(1-f)*(.6+.4*Math.sin(dt*9+i)));
+    ctx.beginPath();ctx.arc(X+Math.cos(e.a)*d,Y+Math.sin(e.a)*d,e.s,0,7);ctx.fill();
+  });
+  ctx.restore();
+}
+function drawBlastScreen(dt){
+  if(dt<0)return;
+  const flash=dt<.07?1:Math.exp(-(dt-.07)*5.5);
+  inScreen(()=>{
+    ctx.fillStyle=`rgba(255,246,230,${flash*.95})`;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=`rgba(255,120,40,${.22*Math.exp(-dt*1.4)})`;ctx.fillRect(0,0,W,H);
+  });
+}
+
+/* ---------- character poses shared between scenes ---------- */
+function poseS2(t){
+  const wu=prog(t,.6,3.0),x=lerp(-170,-32,ease(wu)),amt=Math.min(1,wu*5,(1-wu)*5);
+  const p=stand(x),sw=walk(p,(x+170)/19,amt);
+  const reach=ease(prog(t,3.1,4.25));
+  p.lean=.12*reach;p.crouch=.06*reach;
+  restHands(p,sw);
+  const sh=shoulderOf(p);
+  p.rHw=lerpP(p.rHw,[IGN[0]-30,IGN[1]+3],reach);
+  p.lHw=lerpP(p.lHw,[sh[0]+13,sh[1]+24],reach*.85);
+  p.aim=lerpP([p.rHw[0]+5,p.rHw[1]+30],IGN,reach);
+  return p;
+}
+function poseHold(reach,lean){       // standing by the stand, tool partly withdrawn
+  const p=stand(-32);p.lean=lean;p.crouch=.06*reach;restHands(p);
+  const sh=shoulderOf(p);
+  p.rHw=lerpP(p.rHw,[IGN[0]-30,IGN[1]+3],reach);
+  p.lHw=lerpP(p.lHw,[sh[0]+13,sh[1]+24],reach*.85);
+  p.aim=lerpP([p.rHw[0]+5,p.rHw[1]+30],[IGN[0]+4,IGN[1]+16],reach);
+  return p;
+}
+const S3_END=()=>poseHold(.6,.05);
+function kneel(x){
+  const p=stand(x);p.crouch=.95;p.lean=.42;p.fL=[18,0];p.fR=[-28,0];
+  const sh=shoulderOf(p);p.rHw=[sh[0]+22,FLOOR-4];p.lHw=[sh[0]+4,sh[1]+40];return p;
+}
+function flameS3(t){return{R:3+13*easeOut(prog(t,0,2.2))+Math.sin(t*2.1)*1.2*prog(t,1.5,2.5),chaos:.22+.06*prog(t,2,6)};}
+
+/* ================= SCENES ================= */
+
+/* 01 · The Thread — a line enters from off-screen and draws the person */
+let S1cache=null;
+function S1path(){            // rebuilt when the window size changes, so the thread always starts just off-screen
+  const half=Math.round(W/(2*S))+40;
+  if(S1cache&&S1cache.half===half)return S1cache;
+  const fig=resample(bodyPts((()=>{const p=stand(-170);restHands(p);return p;})()).pts,520);
+  const st=fig.pts[0],raw=[];
+  for(let i=0;i<=500;i++){
+    const u=i/500;
+    let x=lerp(-half,st[0],u),y=lerp(-30,st[1],u)+Math.sin(u*Math.PI*2.4)*55*(1-u);
+    if(u>.42&&u<.7){const v=(u-.42)/.28,ph=v*Math.PI*2,env=Math.sin(v*Math.PI);x+=Math.sin(ph)*48*env;y-=(1-Math.cos(ph))*44*env;}
+    raw.push([x,y]);
+  }
+  const STEP=2, en=resample(raw,0); // measure
+  const entry=resample(raw,Math.max(2,Math.round(en.len/STEP))),figR=resample(fig.pts,Math.max(2,Math.round(fig.len/STEP)));
+  S1cache={half,all:entry.pts.concat(figR.pts.slice(1)),E:entry.pts.length-1,F:figR.pts.length-1,STEP};
+  return S1cache;
+}
+function hermite(t,t0,s0,v0,t1,s1,v1){
+  const h=t1-t0,u=clamp((t-t0)/h),u2=u*u,u3=u2*u;
+  return(2*u3-3*u2+1)*s0+(u3-2*u2+u)*h*v0+(-2*u3+3*u2)*s1+(u3-u2)*h*v1;
+}
+function scene1(t){
+  const {all,E,F}=S1path(), n=all.length;
+  // the pen glides in, then slows down to draw the person with care
+  const vE=1.2*F/2.5;
+  const head=t<.2?0:t<3.1?hermite(t,.2,0,0,3.1,E,vE):hermite(t,3.1,E,vE,5.7,E+F,0);
+  const TAIL=190, tail=clamp(head-TAIL,0,E);
+  const pts=all.map((p,i)=>{
+    if(i>=E)return p;
+    const settle=clamp((i-(head-TAIL))/TAIL);           // the end that is about to be drawn moves least
+    const a=i>0?Math.atan2(p[1]-all[i-1][1],p[0]-all[i-1][0]):0;
+    const w=Math.sin(i*.09-t*4.6)*6*(1-settle*.7);
+    return[p[0]-Math.sin(a)*w,p[1]+Math.cos(a)*w];
+  });
+  // the thread fades in along its length (soft tail)
+  const segs=6;
+  for(let s=0;s<segs;s++){
+    const a=tail+(head-tail)*s/segs,b=tail+(head-tail)*(s+1)/segs+1;
+    line(pts,{from:a,to:b,alpha:tail>=E?1:lerp(.25,1,(s+1)/segs)});
+  }
+  if(tail>=E)line(pts,{from:E,to:head+1});
+  if(t<6.1&&head>0){
+    const hp=pts[Math.min(n-1,Math.floor(head))],a=1-prog(t,5.7,6.1);
+    ctx.save();ctx.globalCompositeOperation="lighter";
+    const g=ctx.createRadialGradient(hp[0],hp[1],0,hp[0],hp[1],16);
+    g.addColorStop(0,`rgba(255,240,215,${.9*a})`);g.addColorStop(1,"rgba(255,180,90,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(hp[0],hp[1],16,0,7);ctx.fill();ctx.restore();
+  }
+}
+
+/* 02 · The Experiment — the person picks up the wand, walks to the sample, sparks it */
+function scene2(t){
+  drawStation(ease(prog(t,0,1.4)));
+  drawRig(ease(prog(t,.4,1.6)));
+  const p=poseS2(t), b=drawBody(p);
+  const tip=drawTool(b.hR,p.aim,ease(prog(t,.3,1.1)));
+  // tool "materialises" with a short glint
+  if(t>.3&&t<1.2){const a=Math.sin(prog(t,.3,1.2)*Math.PI);ctx.save();ctx.globalCompositeOperation="lighter";
+    const g=ctx.createRadialGradient(b.hR[0],b.hR[1],0,b.hR[0],b.hR[1],22);g.addColorStop(0,`rgba(255,220,170,${.5*a})`);g.addColorStop(1,"rgba(255,180,90,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(b.hR[0],b.hR[1],22,0,7);ctx.fill();ctx.restore();}
+  if(tip){sparkBurst(tip,4.45,t,10,31,.8);sparkBurst(tip,4.95,t,14,37,1);}
+  if(t>5.1)drawFlame(FLAME[0],FLAME[1],3*easeOut(prog(t,5.1,5.5)),{t,chaos:.2,seed:1});
+}
+
+/* 03 · The Unknown — ignition; four environmental factors appear, all uncertain */
+function scene3(t){
+  drawStation(1);drawRig(1);
+  const reach=lerp(1,.6,ease(prog(t,.4,1.4))),lean=lerp(.12,.05,ease(prog(t,.4,1.4)));
+  const p=poseHold(reach,lean),b=drawBody(p);drawTool(b.hR,p.aim);
+  sparkBurst(IGN,0,t,16,41,1.1);
+  drawAirflow(t,ease(prog(t,2.2,3.4)),1);
+  FACTORS.forEach((f,i)=>{const a=ease(prog(t,1.3+i*.5,1.9+i*.5));
+    drawGauge(f,i,{alpha:a,unc:1,t,conn:ease(prog(t,1.3+i*.5,2.1+i*.5))});});
+  const fl=flameS3(t);
+  drawFlame(FLAME[0],FLAME[1],fl.R,{t,chaos:fl.chaos,seed:1});
+}
+
+/* 04 · The Failure — tension, unpredictable spread, a failed attempt, the blast */
+const TENDRILS=(()=>{const r=rng(99),a=[];for(let i=0;i<8;i++)a.push({ang:r()*Math.PI*2,on:2+r()*1.7,len:70+r()*120,seed:r()*10});return a;})();
+const SPOTS=(()=>{const r=rng(55),a=[];for(let i=0;i<6;i++)a.push({x:lerp(-120,290,r()),y:r()<.5?FLOOR-6:-138+r()*20,on:3+r()*1.4,s:r()*10});return a;})();
+const BLAST_AT=4.95;
+function poseS4(t){
+  const a=ease(prog(t,.3,1.8)),b=ease(prog(t,2.0,3.1)),c=ease(prog(t,3.45,4.5)),dt=t-BLAST_AT,d=easeOut(prog(dt,0,.8));
+  let x=lerp(lerp(lerp(-32,-46,a),-18,b),-102,c);
+  x=lerp(x,-168,d);
+  const p=stand(x);
+  const stepAmt=Math.max(Math.sin(Math.PI*prog(t,2.0,3.1)),Math.sin(Math.PI*prog(t,3.45,4.5)))*(1-d);
+  walk(p,x/14,stepAmt*.9);
+  p.lean=lerp(lerp(lerp(.05,-.04,a),.17,b),-.24,c);
+  restHands(p);
+  const sh=shoulderOf(p),hc=headOf(p);
+  let rH=lerpP([sh[0]+12,sh[1]+30],p.rHw,a*.6);
+  let lH=p.lHw;
+  rH=lerpP(rH,[FLAME[0]-30,FLAME[1]-8],b);  lH=lerpP(lH,[FLAME[0]-36,FLAME[1]+14],b);   // try to contain it
+  rH=lerpP(rH,[hc[0]+15,hc[1]+3],c);        lH=lerpP(lH,[sh[0]-24,sh[1]+24],c);         // shield the face
+  p.rHw=rH;p.lHw=lH;
+  if(d>0){const k=kneel(x);p.crouch=k.crouch*d;p.lean=lerp(p.lean,k.lean,d);p.fL=lerpP(p.fL,k.fL,d);p.fR=lerpP(p.fR,k.fR,d);
+    const ks=shoulderOf(p);p.rHw=lerpP(p.rHw,[ks[0]+22,FLOOR-4],d);p.lHw=lerpP(p.lHw,[ks[0]+4,ks[1]+40],d);}
+  return p;
+}
+function scene4(t){
+  const dt=t-BLAST_AT;
+  const tension=ease(prog(t,0,2.2)), spread=ease(prog(t,2.0,4.55)), implode=easeIn(prog(t,4.55,BLAST_AT));
+  // camera: slow push-in, tremor while it spreads, hard shake after the blast
+  const zoom=1+.035*tension+.05*implode-.085*easeOut(prog(dt,0,.6))*(dt>0?1:0);
+  const shake=(spread*1.6+implode*3)*(dt<0?1:0)+(dt>=0?16*Math.exp(-dt*4.5):0);
+  ctx.save();
+  ctx.translate(noise(t*37)*shake,noise(t*41+3)*shake);ctx.scale(zoom,zoom);
+  drawStation(1,dt>0?easeOut(prog(dt,0,.5)):0,0);
+  if(dt<0){
+    drawRig(1,spread*.6);
+    const warn=clamp(tension*.6+spread);
+    drawAirflow(t,1-prog(t,3.4,4.3),1,warn);
+    FACTORS.forEach((f,i)=>drawGauge(f,i,{alpha:1-ease(prog(t,3.2+i*.15,3.9+i*.15)),unc:1+tension*.5,warn,t:t*(1+warn*1.5)}));
+  }
+  const p=poseS4(t),b=drawBody(p);
+  if(t<2.0)drawTool(b.hR,p.aim||[b.hR[0]+8,b.hR[1]+28],1);
+  else if(t<3){ // released: the wand floats away, tumbling
+    const k=t-2,cx=b.hR[0]-10*k,cy=b.hR[1]-14*k,ang=1.3+k*2.2,u=[Math.cos(ang),Math.sin(ang)];
+    drawTool([cx,cy],[cx+u[0]*30,cy+u[1]*30],1-k);
+  }
+  if(dt<0){
+    const R=(16+12*tension+34*spread)*(1-.6*implode), heat=clamp(.35*tension+.75*spread);
+    const chaos=.25+.45*tension+.7*spread;
+    TENDRILS.forEach(td=>{
+      const g=ease(prog(t,td.on,td.on+1.4))*(1-implode);if(g<=0)return;
+      for(let j=1;j<=5;j++){
+        const f=j/5,wob=noise(t*1.3+td.seed+j)*.35,a=td.ang+wob;
+        const d=td.len*g*f*(1-implode);
+        drawFlame(FLAME[0]+Math.cos(a)*d,FLAME[1]+Math.sin(a)*d*.8,R*.5*(1-f*.55)*g,{heat,chaos,t,seed:td.seed+j});
+      }
+    });
+    SPOTS.forEach(s=>{const g=ease(prog(t,s.on,s.on+.8))*(1-implode);
+      drawFlame(lerp(s.x,FLAME[0],implode),lerp(s.y,FLAME[1],implode),14*g,{heat:1,chaos:.9,t,seed:s.s});});
+    drawFlame(FLAME[0],FLAME[1],R,{heat,chaos,t,seed:1});
+    if(implode>0){ctx.save();ctx.globalCompositeOperation="lighter";const g=ctx.createRadialGradient(FLAME[0],FLAME[1],0,FLAME[0],FLAME[1],60);
+      g.addColorStop(0,`rgba(255,250,235,${implode})`);g.addColorStop(1,"rgba(255,200,120,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(FLAME[0],FLAME[1],60,0,7);ctx.fill();ctx.restore();}
+  }
+  drawBlastWorld(dt);
+  ctx.restore();
+  // heartbeat-like pulse that builds the tension, then darkness before the blast
+  const beat=Math.pow(Math.abs(Math.sin(t*Math.PI*(1+tension*.8))),8);
+  vignette((.25+.25*beat)*tension*(dt<0?1:0)+.55*implode,[60,8,0]);
+  drawBlastScreen(dt);
+}
+
+/* 05 · The Consequence — damage, drifting debris, stillness */
+function scene5(t){
+  const w=1.6*(1-Math.exp(-t*.75)), dt=6.5-BLAST_AT+w;   // time after the blast, slowing to stillness
+  // scorch on the module wall
+  const g=ctx.createRadialGradient(FLAME[0],FLAME[1],0,FLAME[0],FLAME[1],150);
+  g.addColorStop(0,"rgba(70,32,10,.55)");g.addColorStop(.5,`rgba(140,60,20,${.12*Math.exp(-t*.5)})`);g.addColorStop(1,"rgba(40,20,10,0)");
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(FLAME[0],FLAME[1],150,0,7);ctx.fill();
+  drawStation(1,1,w);
+  drawBlastWorld(dt);
+  drawBody(kneel(-168),{alpha:.85});
+  vignette(.35+.25*prog(t,2.5,4.5));
+}
+
+/* 06 · The Need for Knowledge — rewind, then evidence links to every factor */
+function knowledge(k){
+  const all=1-ease(prog(k,8,9));
+  if(all<=0)return;
+  ctx.save();ctx.globalAlpha=all;
+  drawStation(1-ease(prog(k,.2,1.0)));
+  drawRig(1);
+  const settle=ease(prog(k,6,7.2));
+  const p=poseHold(lerp(.6,.25,settle),lerp(.05,0,settle)),b=drawBody(p);drawTool(b.hR,p.aim);
+  const res=FACTORS.map((f,i)=>ease(prog(k,.3+1.4*i+.9,.3+1.4*i+1.6)));
+  const known=res.reduce((a,b)=>a+b,0)/4;
+  drawAirflow(k+20,1,1-res[2]);
+  FACTORS.forEach((f,i)=>{
+    const s=.3+1.4*i, link=ease(prog(k,s,s+.6)), cin=ease(prog(k,s+.4,s+1.1));
+    drawGauge(f,i,{alpha:1,unc:1-res[i],resolved:res[i],t:k+20});
+    // link from the factor to the evidence card, with a travelling pulse
+    const [cx,cy,cw]=f.card,ch=cardH(f);
+    const anchor=f.side==="bottom"?[cx+24,cy+ch]:f.side==="left"?[cx,cy+ch/2]:[cx+cw,cy+ch/2];
+    if(link>0){
+      const e=lerpP(f.g,anchor,link);
+      ctx.save();ctx.strokeStyle=rgba(C_BLUE,.55);ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(f.g[0],f.g[1]);ctx.lineTo(e[0],e[1]);ctx.stroke();
+      const q=lerpP(f.g,anchor,(k*.8+i*.25)%1*link);ctx.globalCompositeOperation="lighter";
+      ctx.fillStyle=rgba(C_BLUE,.9);ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill();ctx.restore();
+    }
+    drawCard(f,cin);
+  });
+  // the flame calms as each factor becomes understood, then settles to a steady, dim glow
+  drawFlame(FLAME[0],FLAME[1],lerp(16,10,known)+Math.sin(k*2)*.8*(1-known),
+            {t:k+20,chaos:lerp(.28,.04,known),seed:1,alpha:lerp(1,.55,ease(prog(k,6.4,7.6)))});
+  ctx.restore();
+}
+function wrap(text,maxW){
+  const words=text.split(" "),lines=[];let cur="";
+  words.forEach(w=>{const tst=cur?cur+" "+w:w;if(ctx.measureText(tst).width>maxW&&cur){lines.push(cur);cur=w;}else cur=tst;});
+  if(cur)lines.push(cur);return lines;
+}
+function cardLines(f){ctx.save();ctx.font="400 14px Inter, sans-serif";const l=wrap(f.body,f.card[2]-28);ctx.restore();return l;}
+function cardH(f){return 58+cardLines(f).length*19;}
+function drawCard(f,a){
+  if(a<=0)return;
+  const [x0,y,w]=f.card,h=cardH(f),x=x0+(1-a)*(f.side==="right"?-18:18);
+  ctx.save();ctx.globalAlpha*=a;
+  ctx.shadowColor="rgba(74,163,255,.25)";ctx.shadowBlur=18;
+  ctx.fillStyle="rgba(12,20,38,.92)";ctx.beginPath();ctx.roundRect(x,y,w,h,12);ctx.fill();ctx.shadowBlur=0;
+  ctx.strokeStyle="rgba(74,163,255,.35)";ctx.lineWidth=1;ctx.stroke();
+  ctx.strokeStyle=BLUE;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+12,y+.5);ctx.lineTo(x+12+(w-24)*a,y+.5);ctx.stroke();
+  ctx.textBaseline="top";ctx.textAlign="left";
+  ctx.fillStyle=BLUE;ctx.font="600 13px 'IBM Plex Mono', monospace";ctx.fillText(f.id,x+14,y+13);
+  ctx.fillStyle=INK;ctx.font="400 14px Inter, sans-serif";
+  cardLines(f).forEach((l,i)=>ctx.fillText(l,x+14,y+35+i*19));
+  ctx.fillStyle=rgba(C_MUTED,.8);ctx.font="500 9.5px 'IBM Plex Mono', monospace";ctx.fillText(f.tag,x+14,y+h-17);
+  ctx.restore();
+}
+function drawLogo(a){
+  if(a<=0)return;
+  ctx.save();ctx.globalAlpha=a;
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  const g0=ctx.createRadialGradient(-152,-55,0,-152,-55,60);g0.addColorStop(0,"rgba(255,138,42,.25)");g0.addColorStop(1,"rgba(255,138,42,0)");
+  ctx.fillStyle=g0;ctx.beginPath();ctx.arc(-152,-55,60,0,7);ctx.fill();ctx.restore();
+  ctx.beginPath();ctx.ellipse(-150,-55,16,24,0,0,7);
+  const g=ctx.createRadialGradient(-150,-46,0,-150,-55,26);
+  g.addColorStop(0,BLUE);g.addColorStop(.35,BLUE);g.addColorStop(.4,ORANGE);g.addColorStop(1,"#ff6a00");
+  ctx.fillStyle=g;ctx.fill();
+  ctx.fillStyle=INK;ctx.font="600 72px 'IBM Plex Mono', monospace";ctx.textBaseline="middle";
+  ctx.textAlign="left";ctx.letterSpacing="14px";ctx.fillText("QABAS",-110,-52);ctx.letterSpacing="0px";
+  ctx.restore();
+  ctx.save();ctx.globalAlpha=a;ctx.fillStyle=ORANGE;ctx.font="500 20px Inter, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText("A spark of knowledge for fire in space",0,20);ctx.restore();
+}
+const RW=2.6, HOLD=.4;
+function scene6(t){
+  if(t<RW){ // rewind: the explosion plays backwards to the moment before it happened
+    const e=ease(prog(t,0,RW)),tau=(LEN[3]+LEN[4])*(1-e);
+    if(tau>LEN[3])scene5(tau-LEN[3]);else scene4(tau);
+    inScreen(()=>{
+      ctx.fillStyle="rgba(74,163,255,.06)";ctx.fillRect(0,0,W,H);
+      ctx.fillStyle="rgba(235,229,214,.07)";
+      for(let y=(t*260)%6;y<H;y+=6)ctx.fillRect(0,y,W,1);
+      const by=(H-(t*H*.9)%H);ctx.fillStyle="rgba(235,229,214,.08)";ctx.fillRect(0,by,W,18);
+      ctx.fillStyle=`rgba(235,229,214,${.55+.35*Math.sin(t*12)})`;ctx.font="600 26px Inter, sans-serif";ctx.textAlign="center";
+      ctx.fillText("◀◀",W/2,70);
+    });
+    return;
+  }
+  const k=t-RW-HOLD;
+  if(k<0){scene4(0);return;}            // the frame right before things went wrong
+  knowledge(k);
+  drawLogo(ease(prog(k,9.3,10.5))*(1-ease(prog(k,13.6,14.5))));
+}
+
+const DRAW=[scene1,scene2,scene3,scene4,scene5,scene6];
+
+/* ---------- loop ---------- */
+const STARS=(()=>{const r=rng(11),a=[];for(let i=0;i<130;i++)a.push([r()*2-1,r()*2-1,r()*1.4+.3,r()]);return a;})();
+const capEl=document.getElementById("caption"),enEl=capEl.querySelector(".en"),tagEl=capEl.querySelector(".tag");
+const dots=[...document.querySelectorAll("#dots span")];
+let lastCap=null,running=true,capTimer=null;
+const freeze=new URLSearchParams(location.search).get("t");
+const t0=performance.now();
+function setCaption(en,tag){
+  const key=en+"|"+tag; if(key===lastCap)return; lastCap=key;
+  capEl.style.opacity=0; clearTimeout(capTimer);
+  capTimer=setTimeout(()=>{enEl.textContent=en;tagEl.textContent=tag;capEl.style.opacity=en?1:0;},freeze!==null?0:380);
+}
+function frame(now){
+  if(!running)return;
+  try{
+    const T=freeze!==null?(parseFloat(freeze)||0)%LOOP:((now-t0)/1000)%LOOP;
+    let si=0;while(si<5&&T>=START[si+1])si++;
+    const lt=T-START[si];
+    if(si===5){const k=lt-RW-HOLD;
+      if(k<0)setCaption(...CAPS[5]);else if(k<.3)setCaption(...CAPS[5]);
+      else if(k<8)setCaption(...SUB6B);else if(k>9.3&&k<13.6)setCaption(...SUB6C);else setCaption("","");}
+    else setCaption(...CAPS[si]);
+    dots.forEach((d,i)=>d.classList.toggle("on",i<=si));
+
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";
+    ctx.fillStyle="#070b16";ctx.fillRect(0,0,W,H);
+    STARS.forEach(([x,y,r,p])=>{ctx.fillStyle=`rgba(200,210,235,${.2+.3*Math.abs(Math.sin(now/1600+p*6))})`;
+      ctx.beginPath();ctx.arc((x*.5+.5)*W,(y*.5+.5)*H,r,0,7);ctx.fill();});
+    ctx.translate(W/2,OY);ctx.scale(S,S);
+    DRAW[si](lt);
+    // gentle fade at every scene cut so transitions never jump
+    const edge=Math.min(lt,LEN[si]-lt);
+    if(edge<.25&&!(si===3||si===4||(si===5&&lt<RW+HOLD))){ inScreen(()=>{ctx.fillStyle=`rgba(7,11,22,${(1-edge/.25)*.5})`;ctx.fillRect(0,0,W,H);}); }
+  }catch(err){console.error(err);}
+  if(freeze===null)requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- Start (unchanged behaviour) ---------- */
+document.getElementById("start").addEventListener("click",()=>{
+  running=false;
+  if(window.parent!==window){
+    // shown as an overlay inside the QABAS site: tell the site to remove it
+    window.parent.postMessage({type:"qabas-start"},"*");
+  }else{
+    // opened on its own: go to the site
+    window.location.href="./";
+  }
+});
+</script>
+</body>
+</html>

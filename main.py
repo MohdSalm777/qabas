@@ -17,6 +17,7 @@ Folder layout expected next to this file:
 Run:  uvicorn main:app --reload
 """
 
+import io
 import json
 import math
 import os
@@ -49,7 +50,18 @@ def load_table(name: str) -> pd.DataFrame:
     path = DATA_DIR / f"{name}.csv"
     if not path.exists():
         raise HTTPException(status_code=500, detail=f"Missing data file: {path.name}")
-    return pd.read_csv(path)
+    # Files edited in Excel may carry a byte-order mark, a Windows encoding,
+    # or semicolons instead of commas. Accept all three.
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("cp1252")
+    header = text.split("\n", 1)[0]
+    sep = ";" if header.count(";") > header.count(",") else ","
+    df = pd.read_csv(io.StringIO(text), sep=sep)
+    df.columns = [str(c).strip() for c in df.columns]
+    return df
 
 
 def to_records(df: pd.DataFrame) -> list[dict]:
@@ -179,6 +191,21 @@ def get_environments():
     return to_records(load_table("environments"))
 
 
+# ---------- investigations catalogue ----------
+
+def load_catalogue() -> dict:
+    """Read data/catalogue.json: one summary per NASA investigation."""
+    path = DATA_DIR / "catalogue.json"
+    if not path.exists():
+        raise HTTPException(status_code=500, detail="Missing data file: catalogue.json")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.get("/api/catalogue")
+def get_catalogue():
+    return load_catalogue()
+
+
 # ---------- Ask QABAS (AI assistant) ----------
 # The assistant may only use the records below, which are built from the CSV files.
 # Set GEMINI_API_KEY on the server to switch on written answers. Without a key the
@@ -197,9 +224,12 @@ Rules:
 - If the RECORDS do not answer the question, say exactly: "The QABAS dataset does not
   contain enough information to answer that." Then say in one sentence what the dataset
   does cover.
-- The dataset is SAFFIRE-II only: microgravity tests at about 21.5-22.1 % oxygen and about
-  102.6 kPa. Do not extend results to the Moon, Mars, or other atmospheres; say the data
-  does not cover them.
+- Detailed test data exists for SAFFIRE-II only: microgravity tests at about 21.5-22.1 %
+  oxygen and about 102.6 kPa. Do not extend those results to the Moon, Mars, or other
+  atmospheres; say the data does not cover them.
+- Records of kind "catalogue" are short summaries of other NASA investigations taken from
+  the NASA challenge statement. Use them to say which investigation is relevant to a need,
+  and say that QABAS has not yet extracted their detailed data.
 - Outcome labels (no spread, partial burn, burned full length, no ignition) are QABAS
   labels, not NASA wording. Say so if the user asks about outcomes.
 - Be brief: at most 6 sentences, plain language. Reply in the language of the question.
@@ -243,8 +273,16 @@ def build_records() -> list[dict]:
         records.append({"id": t["test_id"], "kind": "test", "title": f"{t['fuel']} test", "text": text})
 
     for f in to_records(load_table("findings")):
-        text = f"{f['finding']} Conditions: {f['conditions']}. Source quote: \"{f['evidence_quote']}\""
-        records.append({"id": f["finding_id"], "kind": "finding", "title": "Finding", "text": text})
+        text = f"{f.get('finding')} Conditions: {_text(f.get('conditions'))}."
+        if f.get("evidence_quote"):
+            text += f" Source quote: \"{f['evidence_quote']}\""
+        if f.get("safety_pillar"):
+            text += f" Fire safety pillar: {f['safety_pillar']}."
+        if f.get("implication_for_crew"):
+            text += f" Implication for crew (QABAS team interpretation): {f['implication_for_crew']}"
+        if f.get("earth_application"):
+            text += f" Earth application (QABAS team interpretation): {f['earth_application']}"
+        records.append({"id": str(f.get("finding_id")), "kind": "finding", "title": "Finding", "text": text})
 
     for inv in to_records(load_table("investigations")):
         text = (
@@ -256,6 +294,23 @@ def build_records() -> list[dict]:
         )
         records.append({"id": inv["investigation_id"], "kind": "investigation", "title": "Investigation", "text": text})
 
+    catalogue = load_catalogue()
+    need_labels = {n["id"]: n["label"] for n in catalogue["needs"]}
+    for inv in catalogue["investigations"]:
+        if inv["id"] == "SAFFIRE-II":
+            continue  # already covered in detail above
+        relevant = "; ".join(
+            f"{need_labels[need]} ({r['level']}: {r['reason']})"
+            for need, r in inv["relevance"].items()
+        )
+        text = (
+            f"{inv['full_name']}. Fire safety pillar: {inv['pillar']}. {inv['summary']} "
+            f"Fuel: {_text(inv['fuel'])}. Hardware: {_text(inv['hardware'])}. "
+            f"Relevant to: {relevant or 'no specific need named in the NASA statement'}. "
+            "QABAS holds a summary only; its detailed data has not been extracted yet."
+        )
+        records.append({"id": inv["id"], "kind": "catalogue", "title": inv["name"], "text": text})
+
     earth = sum(1 for t in tests if t["outcome_1g"] is not None)
     records.append({
         "id": "QABAS-COVERAGE",
@@ -264,9 +319,12 @@ def build_records() -> list[dict]:
         "text": (
             f"The QABAS dataset holds {len(tests)} microgravity test rows and {earth} Earth 1 g "
             "comparison results, all from SAFFIRE-II. It holds no tests at Moon gravity (0.17 g) "
-            "or Mars gravity (0.38 g), and no tests at other oxygen levels or pressures, so it "
-            "cannot predict fire behaviour in a lunar or Martian habitat or in NASA's proposed "
-            "exploration atmosphere (34 % oxygen at 56.5 kPa)."
+            "or Mars gravity (0.38 g): NASA states there is currently no partial-gravity "
+            "combustion data in its PSI database and expects it from the LUCI and FM2 "
+            "experiments. NASA also states that microgravity and normal-gravity results could "
+            "bound what occurs at intermediate gravity. QABAS holds no tests at other oxygen "
+            "levels or pressures, while NASA expects the Moon Base and pressurized rovers to "
+            "use 30 % oxygen or more at 10.2 psi or less."
         ),
     })
     return records

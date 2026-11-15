@@ -1,0 +1,252 @@
+{
+  "source": {
+    "title": "NASA Space Apps 2026 challenge statement: Flame in Freefall",
+    "url": "https://www.spaceappschallenge.org/2026/challenges/flame-in-freefall/",
+    "note": "Every summary below is taken from this statement. Saffire-II also uses the QABAS extraction of NASA PSI record PSI-99."
+  },
+  "needs": [
+    {
+      "id": "materials",
+      "label": "Choosing cabin materials",
+      "context": "Prevention relies on material selection, which depends on understanding flammability limits."
+    },
+    {
+      "id": "detection",
+      "label": "Detecting a fire",
+      "context": "Fire detection was tested in microgravity through smoke and aerosol measurements."
+    },
+    {
+      "id": "suppression",
+      "label": "Putting a fire out",
+      "context": "Suppression was studied by diluting the chamber atmosphere with carbon dioxide and helium."
+    },
+    {
+      "id": "oxygen",
+      "label": "Oxygen-rich habitats",
+      "context": "The Moon Base and pressurized rovers are expected to use 30 % oxygen or more at 10.2 psi or less, which makes materials much more flammable."
+    },
+    {
+      "id": "gravity",
+      "label": "Moon and Mars gravity",
+      "context": "There is currently no partial-gravity combustion data in PSI. NASA expects it to be added from LUCI and FM2. Microgravity and normal-gravity results could bound what occurs in between."
+    }
+  ],
+  "investigations": [
+    {
+      "id": "SAFFIRE-II",
+      "name": "Saffire-II",
+      "full_name": "Spacecraft Fire Safety Demonstration II",
+      "pillar": "Prevention",
+      "fuel": "Solid materials (fabrics and plastics)",
+      "hardware": "Cygnus cargo spacecraft",
+      "summary": "Flammability of solid materials such as fabrics and plastics.",
+      "qabas_data": "full",
+      "relevance": {
+        "materials": {"level": "direct", "reason": "Named by NASA as a flammability study of solid materials."},
+        "gravity": {"level": "related", "reason": "QABAS holds both the microgravity and the Earth result for each sample, the two ends NASA says could bound partial gravity."}
+      }
+    },
+    {
+      "id": "SAFFIRE-I",
+      "name": "Saffire-I",
+      "full_name": "Spacecraft Fire Safety Demonstration I",
+      "pillar": "Prevention",
+      "fuel": "Solid materials (fabrics and plastics)",
+      "hardware": null,
+      "summary": "Flammability of solid materials such as fabrics and plastics.",
+      "qabas_data": "summary",
+      "relevance": {
+        "materials": {"level": "direct", "reason": "Named by NASA as a flammability study of solid materials."}
+      }
+    },
+    {
+      "id": "SAFFIRE-III",
+      "name": "Saffire-III",
+      "full_name": "Spacecraft Fire Safety Demonstration III",
+      "pillar": "Prevention",
+      "fuel": "Solid materials (fabrics and plastics)",
+      "hardware": null,
+      "summary": "Flammability of solid materials such as fabrics and plastics.",
+      "qabas_data": "summary",
+      "relevance": {
+        "materials": {"level": "direct", "reason": "Named by NASA as a flammability study of solid materials."}
+      }
+    },
+    {
+      "id": "BASS",
+      "name": "BASS",
+      "full_name": "Burning and Suppression of Solids",
+      "pillar": "Prevention",
+      "fuel": "Solid materials (fabrics and plastics)",
+      "hardware": "Microgravity Science Glovebox, with the fan-driven flow duct built for SPICE",
+      "summary": "Flammability of solid materials such as fabrics and plastics.",
+      "qabas_data": "summary",
+      "relevance": {
+        "materials": {"level": "direct", "reason": "Named by NASA as a flammability study of solid materials."}
+      }
+    },
+    {
+      "id": "BASS-II",
+      "name": "BASS-II",
+      "full_name": "Burning and Suppression of Solids II",
+      "pillar": "Prevention",
+      "fuel": "Solid materials (fabrics and plastics)",
+      "hardware": "Microgravity Science Glovebox, with the fan-driven flow duct built for SPICE",
+      "summary": "Flammability of solid materials such as fabrics and plastics.",
+      "qabas_data": "summary",
+      "relevance": {
+        "materials": {"level": "direct", "reason": "Named by NASA as a flammability study of solid materials."}
+      }
+    },
+    {
+      "id": "BRE",
+      "name": "BRE",
+      "full_name": "Burning Rate Emulator (ACME project)",
+      "pillar": "Prevention",
+      "fuel": "Gaseous fuels",
+      "hardware": "ACME hardware in the Combustion Integrated Rack",
+      "summary": "Burned gaseous fuels to study materials flammability in still atmospheres as a function of material properties.",
+      "qabas_data": "summary",
+      "relevance": {
+        "materials": {"level": "direct", "reason": "A study of materials flammability in still atmospheres."}
+      }
+    },
+    {
+      "id": "SAME",
+      "name": "SAME",
+      "full_name": "Smoke and Aerosol Measurement Experiment",
+      "pillar": "Detection",
+      "fuel": null,
+      "hardware": null,
+      "summary": "Fire detection tested in microgravity.",
+      "qabas_data": "summary",
+      "relevance": {
+        "detection": {"level": "direct", "reason": "Named by NASA as its microgravity test of fire detection."}
+      }
+    },
+    {
+      "id": "SAME-R",
+      "name": "SAME-R",
+      "full_name": "Smoke and Aerosol Measurement Experiment (reflight)",
+      "pillar": "Detection",
+      "fuel": null,
+      "hardware": null,
+      "summary": "Fire detection tested in microgravity.",
+      "qabas_data": "summary",
+      "relevance": {
+        "detection": {"level": "direct", "reason": "Named by NASA as its microgravity test of fire detection."}
+      }
+    },
+    {
+      "id": "DAFT",
+      "name": "DAFT",
+      "full_name": "Dust and Aerosol Measurement Feasibility Test",
+      "pillar": "Detection",
+      "fuel": null,
+      "hardware": null,
+      "summary": "Used one of the SAME smoke-detection instruments to detect dust instead.",
+      "qabas_data": "summary",
+      "relevance": {
+        "detection": {"level": "related", "reason": "Same instrument as SAME, used on dust, not smoke."}
+      }
+    },
+    {
+      "id": "DAFT-2",
+      "name": "DAFT-2",
+      "full_name": "Dust and Aerosol Measurement Feasibility Test 2",
+      "pillar": "Detection",
+      "fuel": null,
+      "hardware": null,
+      "summary": "Used one of the SAME smoke-detection instruments to detect dust instead.",
+      "qabas_data": "summary",
+      "relevance": {
+        "detection": {"level": "related", "reason": "Same instrument as SAME, used on dust, not smoke."}
+      }
+    },
+    {
+      "id": "FLEX",
+      "name": "FLEX",
+      "full_name": "Flame Extinguishment Experiment",
+      "pillar": "Suppression",
+      "fuel": "Droplets of liquid fuel",
+      "hardware": "Multi-user Droplet Combustion Apparatus in the Combustion Integrated Rack",
+      "summary": "Suppression studied by diluting the chamber atmosphere with carbon dioxide and helium.",
+      "qabas_data": "summary",
+      "relevance": {
+        "suppression": {"level": "direct", "reason": "Named by NASA as its suppression study, using carbon dioxide and helium."}
+      }
+    },
+    {
+      "id": "FLEX-2",
+      "name": "FLEX-2",
+      "full_name": "Flame Extinguishment Experiment 2",
+      "pillar": "Supporting science",
+      "fuel": "Droplets of liquid fuel",
+      "hardware": "Multi-user Droplet Combustion Apparatus in the Combustion Integrated Rack",
+      "summary": "Burning droplets of liquid fuel.",
+      "qabas_data": "summary",
+      "relevance": {
+        "suppression": {"level": "related", "reason": "Same apparatus and fuel form as FLEX. The statement does not describe its suppression results."}
+      }
+    },
+    {
+      "id": "CFI",
+      "name": "CFI",
+      "full_name": "Cool Flames Investigation",
+      "pillar": "Supporting science",
+      "fuel": "Droplets of liquid fuel",
+      "hardware": "Multi-user Droplet Combustion Apparatus in the Combustion Integrated Rack",
+      "summary": "Burning droplets of liquid fuel.",
+      "qabas_data": "summary",
+      "relevance": {}
+    },
+    {
+      "id": "CFI-G",
+      "name": "CFI-G",
+      "full_name": "Cool Flames Investigation with Gases (ACME project)",
+      "pillar": "Supporting science",
+      "fuel": "Gaseous fuels, for example propane",
+      "hardware": "ACME hardware in the Combustion Integrated Rack",
+      "summary": "The microgravity tests with the highest oxygen concentrations: an oxygen-nitrogen mixture of up to 85 % oxygen flowed from a spherical burner.",
+      "qabas_data": "summary",
+      "relevance": {
+        "oxygen": {"level": "direct", "reason": "Highest oxygen concentrations tested in microgravity, up to 85 %."}
+      }
+    },
+    {
+      "id": "E-FIELD",
+      "name": "E-FIELD Flames",
+      "full_name": "Electric-Field Effects on Laminar Diffusion Flames (ACME project)",
+      "pillar": "Supporting science",
+      "fuel": "Gaseous fuels",
+      "hardware": "ACME hardware in the Combustion Integrated Rack",
+      "summary": "Partial gravity was mimicked through the effect of an electric field on the ions that naturally occur in flames.",
+      "qabas_data": "summary",
+      "relevance": {
+        "gravity": {"level": "direct", "reason": "The only investigation NASA names as mimicking partial gravity."}
+      }
+    },
+    {
+      "id": "SPICE",
+      "name": "SPICE",
+      "full_name": "Smoke Point In Co-flow Experiment",
+      "pillar": "Supporting science",
+      "fuel": null,
+      "hardware": "Microgravity Science Glovebox, with its own fan-driven flow duct",
+      "summary": "Conducted in the glovebox with the flow duct later reused by BASS, BASS-II and SLICE.",
+      "qabas_data": "summary",
+      "relevance": {}
+    },
+    {
+      "id": "SLICE",
+      "name": "SLICE",
+      "full_name": "Structure & Liftoff In Combustion Experiment",
+      "pillar": "Supporting science",
+      "fuel": null,
+      "hardware": "Microgravity Science Glovebox, with the fan-driven flow duct built for SPICE",
+      "summary": "Conducted in the glovebox with the flow duct built for SPICE.",
+      "qabas_data": "summary",
+      "relevance": {}
+    }
+  ]
+}

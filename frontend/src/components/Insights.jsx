@@ -127,19 +127,22 @@ function Insights({ tests }) {
       </div>
       <ul className="limits">
         <li>
-          <strong>Gravity:</strong> this dataset covers microgravity and Earth only. Results for
-          the Moon and Mars cannot be read off a line between them.{" "}
+          <strong>Gravity:</strong> NASA states there is currently no partial-gravity
+          combustion data in its PSI database, and expects it from the LUCI and FM2
+          experiments. It also notes that microgravity and normal-gravity results could bound
+          what occurs in between: QABAS shows both ends for every sample above. Treat that as
+          a guide, not a rule.{" "}
           <a href="https://ntrs.nasa.gov/citations/20240015307" target="_blank" rel="noreferrer">
             NASA reports
           </a>{" "}
           that lunar gravity widens the flammability limits of some materials compared with
-          Earth, which is why a dedicated Moon experiment (FM2) is planned.
+          Earth, so the Moon is not simply a midpoint.
         </li>
         <li>
           <strong>Atmosphere:</strong> every test here ran at {Math.min(...o2)} to{" "}
           {Math.max(...o2)} % oxygen and {Math.min(...pressure)} to {Math.max(...pressure)} kPa.
-          NASA&apos;s proposed exploration atmosphere is 34 % oxygen at 8.2 psia (56.5 kPa), so
-          none of these tests matches it.
+          NASA expects the Moon Base and pressurized rovers to use 30 % oxygen or more at
+          10.2 psi (about 70 kPa) or less, so none of these tests matches that atmosphere.
         </li>
         <li>
           <strong>Use it for:</strong> which cabin materials spread flame in a normal-air

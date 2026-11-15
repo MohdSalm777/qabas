@@ -46,3 +46,7 @@ export async function askQabas(question) {
   }
   return response.json();
 }
+
+export function getCatalogue() {
+  return get("/api/catalogue");
+}
