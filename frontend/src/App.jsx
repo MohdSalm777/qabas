@@ -17,10 +17,12 @@ function App() {
   const [outcome, setOutcome] = useState("all");
   const [search, setSearch] = useState("");
   const [openTestId, setOpenTestId] = useState(null);
+  const [show3d, setShow3d] = useState(false);
 
   // The intro plays once per browser tab; the data loads underneath meanwhile.
   // It is drawn for wide screens, so phones go straight to the site.
   const [showIntro, setShowIntro] = useState(() => {
+    if (window.self !== window.top) return false;
     if (window.innerWidth < 760) return false;
     try {
       return sessionStorage.getItem("qabas-intro-seen") !== "1";
@@ -101,7 +103,7 @@ function App() {
       <header className="hero">
         <p className="eyebrow">NASA Space Apps 2026 · Flame in Freefall</p>
         <h1>QABAS</h1>
-        <p className="tagline">Understanding fire beyond gravity</p>
+        <p className="tagline">A spark of knowledge for fire in space</p>
         <p className="intro">
           NASA&apos;s spacecraft fire research in one place: every investigation ranked by
           the safety question it answers, and one of them, Saffire-II, explored down to
@@ -198,10 +200,48 @@ function App() {
         <section id="lab">
           <h2>Fire Lab</h2>
           <p className="section-intro">
-            Pick a material and a sample, then watch the real burn replayed second by
-            second and compare it with the same sample on Earth.
+            Watch the real burns replayed second by second, in 3D or as a quick 2D replay,
+            and compare each one with the same sample on Earth.
           </p>
-          {status === "ready" && <FireLab tests={tests} />}
+
+          <div className="lab3d-card">
+            <div>
+              <h3>Virtual Fire Lab in 3D</h3>
+              <p>
+                Orbit the burning sample, switch between microgravity and Earth, and see
+                what published experiments say about other oxygen levels, pressures,
+                airflows and diluent gases, each with its source.
+              </p>
+            </div>
+            <div className="lab3d-actions">
+              <button className="primary lab3d-launch" onClick={() => setShow3d(!show3d)}>
+                {show3d ? "Close 3D lab" : "Launch 3D lab"}
+              </button>
+              <a
+                className="secondary"
+                href={`${import.meta.env.BASE_URL}firelab3d.html`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open full screen
+              </a>
+            </div>
+          </div>
+
+          {show3d ? (
+            <iframe
+              className="lab3d-frame"
+              src={`${import.meta.env.BASE_URL}firelab3d.html`}
+              title="QABAS Virtual Fire Lab in 3D"
+            />
+          ) : (
+            status === "ready" && (
+              <>
+                <h3 className="sub">Quick 2D replay</h3>
+                <FireLab tests={tests} />
+              </>
+            )
+          )}
         </section>
 
         <section id="insights">
@@ -287,6 +327,14 @@ function App() {
           className="intro-frame"
           src={`${import.meta.env.BASE_URL}intro.html`}
           title="QABAS introduction"
+          onLoad={(event) => {
+            // If the intro file is missing, skip it instead of blocking the site.
+            try {
+              if (!event.target.contentDocument.getElementById("start")) setShowIntro(false);
+            } catch {
+              setShowIntro(false);
+            }
+          }}
         />
       )}
 

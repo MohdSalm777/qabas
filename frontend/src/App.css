@@ -1139,3 +1139,60 @@ section {
   text-align: left;
   font-size: 0.95rem;
 }
+
+/* ---------- 3D fire lab ---------- */
+
+.lab3d-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--flame);
+  border-radius: 14px;
+  background: var(--panel);
+}
+
+.lab3d-card > div:first-child {
+  flex: 1 1 320px;
+}
+
+.lab3d-card h3 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+}
+
+.lab3d-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.lab3d-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+a.secondary {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.lab3d-frame {
+  display: block;
+  width: 100%;
+  height: min(88vh, 900px);
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #07090f;
+}
+
+@media (max-width: 760px) {
+  /* The 3D lab needs room: on phones it opens as its own page instead. */
+  .lab3d-launch {
+    display: none;
+  }
+}
